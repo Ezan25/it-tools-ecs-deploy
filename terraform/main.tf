@@ -3,3 +3,9 @@ module "vpc" {
 
   project_name = var.project_name
 }
+
+module "ecr" {
+  source = "./modules/ecr"
+
+  repository_name = "it-tools-ecs"
+}
