@@ -22,7 +22,9 @@ module "alb" {
   vpc_id            = module.vpc.vpc_id
   public_subnet_ids = module.vpc.public_subnet_ids
   certificate_arn   = module.acm.certificate_arn
+  container_port    = 8080
 }
+
 
 resource "aws_route53_record" "app" {
   zone_id = module.acm.zone_id
@@ -44,6 +46,7 @@ module "ecs" {
   target_group_arn      = module.alb.target_group_arn
   ecr_repository_url    = module.ecr.repository_url
   aws_region             = "eu-west-2"
+  container_port         = 8080
 
   depends_on = [module.alb]
 }

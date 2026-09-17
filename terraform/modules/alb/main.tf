@@ -34,7 +34,7 @@ resource "aws_lb" "main" {
 }
 
 resource "aws_lb_target_group" "app" {
-  name        = "it-tools-tg"
+  name_prefix = "tg-"
   port        = var.container_port
   protocol    = "HTTP"
   vpc_id      = var.vpc_id
@@ -47,6 +47,10 @@ resource "aws_lb_target_group" "app" {
     timeout             = 5
     healthy_threshold   = 3
     unhealthy_threshold = 3
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
