@@ -37,14 +37,14 @@ resource "aws_vpc_security_group_ingress_rule" "from_alb" {
   security_group_id            = aws_security_group.ecs_tasks.id
   referenced_security_group_id = var.alb_security_group_id
   from_port                    = var.container_port
-  to_port                       = var.container_port
+  to_port                      = var.container_port
   ip_protocol                  = "tcp"
 }
 
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {
   security_group_id = aws_security_group.ecs_tasks.id
-  cidr_ipv4          = "0.0.0.0/0"
-  ip_protocol        = "-1"
+  cidr_ipv4         = "0.0.0.0/0"
+  ip_protocol       = "-1"
 }
 
 resource "aws_ecs_task_definition" "app" {
@@ -94,7 +94,7 @@ resource "aws_ecs_service" "app" {
 
   load_balancer {
     target_group_arn = var.target_group_arn
-    container_name    = "it-tools"
-    container_port    = var.container_port
+    container_name   = "it-tools"
+    container_port   = var.container_port
   }
 }

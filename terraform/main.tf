@@ -45,8 +45,8 @@ module "ecs" {
   alb_security_group_id = module.alb.security_group_id
   target_group_arn      = module.alb.target_group_arn
   ecr_repository_url    = module.ecr.repository_url
-  aws_region             = "eu-west-2"
-  container_port         = 8080
+  aws_region            = "eu-west-2"
+  container_port        = 8080
 
   depends_on = [module.alb]
 }
