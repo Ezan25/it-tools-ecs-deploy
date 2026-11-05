@@ -44,6 +44,8 @@ Architecture
 
 Architecture diagram
 
+<img width="1224" height="687" alt="image" src="https://github.com/user-attachments/assets/e9862d8b-945c-4017-99a7-7154f7a04771" />
+
 Users look up tm.ezanstoic.org in Route 53, which points at the Application Load Balancer. The load balancer sits in the public subnets, uses an ACM certificate to serve HTTPS on port 443, and redirects port 80 to 443. It forwards traffic to the Fargate tasks on port 8080 and checks /health to know whether each task is okay. The tasks pull their image from ECR and send their logs to CloudWatch. The Terraform state lives in an S3 bucket, and GitHub Actions deploys everything using short-lived credentials from OIDC.
 
 I used public subnets for the tasks. That means they can reach ECR without a NAT gateway, which would add about $30 a month. The tasks are still not open to the internet, because their security group only accepts traffic from the load balancer's security group. For a real production workload I would move them to private subnets with a NAT gateway or VPC endpoints.
