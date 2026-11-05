@@ -1,0 +1,44 @@
+name: terraform-destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type destroy to confirm"
+        required: true
+
+concurrency:
+  group: terraform-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-west-2
+
+jobs:
+  destroy:
+    if: ${{ inputs.confirm == 'destroy' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::071975552065:role/it-tools-github-terraform
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Init
+        run: terraform init
+
+      - name: Destroy
+        run: terraform destroy -auto-approve -input=false
+
+      - name: Summary
+        run: echo "Infrastructure destroyed" >> "$GITHUB_STEP_SUMMARY"
