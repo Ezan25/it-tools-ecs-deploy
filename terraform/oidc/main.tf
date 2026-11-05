@@ -1,7 +1,7 @@
 data "aws_caller_identity" "current" {}
 
 locals {
-  repo         = "Ezan25/it-tools-ecs-deploy"
+  repo         = "Ezan25@238967468/it-tools-ecs-deploy@1334611174"
   account_id   = data.aws_caller_identity.current.account_id
   state_bucket = "it-tools-ecs-deploy-tfstate-${local.account_id}"
 }
