@@ -1,0 +1,85 @@
+name: terraform-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "terraform/**"
+      - "!terraform/oidc/**"
+      - "!terraform/bootstrap/**"
+  workflow_dispatch:
+
+concurrency:
+  group: terraform-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: eu-west-2
+  APP_URL: https://tm.ezanstoic.org
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hashicorp/setup-terraform@v4
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::071975552065:role/it-tools-github-terraform
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Format check
+        run: terraform fmt -check -recursive
+
+      - name: Init
+        run: terraform init
+
+      - name: Validate
+        run: terraform validate
+
+      - name: Apply
+        run: terraform apply -auto-approve -input=false
+
+  image:
+    needs: apply
+    permissions:
+      id-token: write
+      contents: read
+    uses: ./.github/workflows/app.yml
+
+  verify:
+    needs: image
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::071975552065:role/it-tools-github-terraform
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Roll the service onto the new image
+        run: aws ecs update-service --cluster it-tools-cluster --service it-tools-service --force-new-deployment --no-cli-pager > /dev/null
+
+      - name: Wait for a healthy response
+        run: |
+          for i in $(seq 1 40); do
+            code="$(curl -s -o /dev/null -w '%{http_code}' "$APP_URL/health" || true)"
+            echo "attempt $i: HTTP $code"
+            if [ "$code" = "200" ]; then
+              echo "App is healthy at $APP_URL" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "App did not become healthy at $APP_URL" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
